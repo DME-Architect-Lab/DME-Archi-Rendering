@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { 
   Upload, Wand2, Play, Download, Trash2, 
   Maximize2, RotateCw, Building2, Home, Sun, Cloud, 
@@ -21,9 +21,10 @@ import ImageModal from '../ImageModal';
 interface RenderSectionProps {
   mode: RenderMode;
   resolution?: string;
+  clearHistoryTrigger?: number;
 }
 
-const RenderSection: React.FC<RenderSectionProps> = ({ mode, resolution = '1K' }) => {
+const RenderSection: React.FC<RenderSectionProps> = ({ mode, resolution = '1K', clearHistoryTrigger }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [refImage, setRefImage] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
@@ -58,6 +59,33 @@ const RenderSection: React.FC<RenderSectionProps> = ({ mode, resolution = '1K' }
 
   const isFloorplanMode = mode === 'Floorplan3D' || mode === '3DFloorplan';
   const isInteriorMode = mode === 'Interior';
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('archi_render_history');
+    if (saved) {
+      try {
+        setResults(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
+  }, []);
+
+  // Save history to localStorage whenever results change
+  useEffect(() => {
+    if (results.length > 0) {
+      localStorage.setItem('archi_render_history', JSON.stringify(results));
+    }
+  }, [results]);
+
+  // Handle external clear history trigger
+  useEffect(() => {
+    if (clearHistoryTrigger && clearHistoryTrigger > 0) {
+      setResults([]);
+    }
+  }, [clearHistoryTrigger]);
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string | null) => void) => {
     const file = e.target.files?.[0];
@@ -134,6 +162,7 @@ const RenderSection: React.FC<RenderSectionProps> = ({ mode, resolution = '1K' }
         timestamp: Date.now()
       }));
 
+      // Update state, this will trigger the useEffect to save to localStorage
       setResults(prev => [...newImages, ...prev]);
     } catch (err: any) {
       console.error("Rendering failed", err);
@@ -156,6 +185,11 @@ const RenderSection: React.FC<RenderSectionProps> = ({ mode, resolution = '1K' }
     if (selectedIndex > 0) {
       setSelectedImageForModal(results[selectedIndex - 1].url);
     }
+  };
+
+  const clearHistory = () => {
+    setResults([]);
+    localStorage.removeItem('archi_render_history');
   };
 
   return (
@@ -563,7 +597,7 @@ const RenderSection: React.FC<RenderSectionProps> = ({ mode, resolution = '1K' }
                    <span className="text-[11px] text-slate-700 font-bold italic">ရလဒ်မှတ်တမ်း</span>
                 </div>
                 {results.length > 0 && (
-                  <button onClick={() => setResults([])} className="text-[10px] text-slate-600 hover:text-red-400 font-black uppercase tracking-[0.1em] transition-all flex items-center gap-2">
+                  <button onClick={clearHistory} className="text-[10px] text-slate-600 hover:text-red-400 font-black uppercase tracking-[0.1em] transition-all flex items-center gap-2">
                     <Trash2 className="w-3.5 h-3.5" /> Clear All
                   </button>
                 )}

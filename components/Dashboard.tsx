@@ -10,6 +10,7 @@ import EditSection from './sections/EditSection';
 import UtilitiesSection from './sections/UtilitiesSection';
 import VideoSection from './sections/VideoSection';
 import Logo from './Logo';
+import SettingsModal from './SettingsModal';
 
 interface DashboardProps {
   onHome: () => void;
@@ -21,6 +22,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
   const [isPro, setIsPro] = useState(true);
   const [resolution, setResolution] = useState('1K');
   const [showResMenu, setShowResMenu] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [clearTrigger, setClearTrigger] = useState(0);
 
   const resolutions = ['1K', '2K', '4K', '6K'];
 
@@ -35,6 +38,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
     }
     setResolution(res);
     setShowResMenu(false);
+  };
+
+  const handleClearHistory = () => {
+    localStorage.removeItem('archi_render_history');
+    setClearTrigger(prev => prev + 1); // Trigger re-render/effect in children
   };
 
   const renderActiveContent = () => {
@@ -58,7 +66,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
                 </button>
               ))}
             </div>
-            <RenderSection mode={activeRenderMode} resolution={resolution} />
+            <RenderSection mode={activeRenderMode} resolution={resolution} clearHistoryTrigger={clearTrigger} />
           </div>
         );
       case 'Video':
@@ -84,6 +92,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col selection:bg-indigo-500/30">
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        onClearHistory={handleClearHistory}
+      />
+
       <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 lg:px-6 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-[60]">
         <div className="flex items-center gap-4 lg:gap-8 flex-1 overflow-hidden">
           <button 
@@ -151,7 +165,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
             </button>
           </div>
           
-          <button className="p-2 text-slate-500 hover:text-white transition-colors hidden sm:block">
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2 text-slate-500 hover:text-white transition-colors hidden sm:block hover:bg-slate-800 rounded-lg"
+          >
             <Settings className="w-5 h-5" />
           </button>
           <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center text-[11px] font-black border border-indigo-400/30 shadow-xl text-white">
