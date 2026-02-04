@@ -51,17 +51,25 @@ const VideoSection: React.FC = () => {
       setIsGenerating(true);
       setError(null);
       
-      // Mandatory API key check for Veo
-      if (typeof window.aistudio !== 'undefined') {
+      // Determine API Key: Check Local Storage first, then Environment
+      const manualKey = localStorage.getItem('gemini_api_key');
+      let apiKey = manualKey || process.env.API_KEY;
+
+      // Only if no manual key is set, try the interactive selection
+      if (!manualKey && typeof window.aistudio !== 'undefined') {
         const hasKey = await window.aistudio.hasSelectedApiKey();
         if (!hasKey) {
           await window.aistudio.openSelectKey();
-          // After calling openSelectKey, we proceed assuming user will select or has selected.
-          // In a real app we might wait, but instructions say assume success and proceed.
         }
       }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Re-read apiKey after potential selection (though environment variable won't update in real-time in this context, 
+      // standard practice for the component flow is to rely on what we have)
+      if (!apiKey) {
+          throw new Error("API Key missing. Please go to Settings and enter a valid API Key.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       // Start video generation
       let operation = await ai.models.generateVideos({
@@ -87,18 +95,16 @@ const VideoSection: React.FC = () => {
       const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
       if (!downloadLink) throw new Error("Video generation failed - no URI returned.");
 
-      const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+      // Use the resolved apiKey for the download fetch as well
+      const response = await fetch(`${downloadLink}&key=${apiKey}`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       setVideoUrl(url);
 
     } catch (err: any) {
       console.error("Video Generation Error:", err);
-      if (err.message?.includes("Requested entity was not found")) {
-        setError("API Key error. Please re-select your paid API key.");
-        if (typeof window.aistudio !== 'undefined') {
-          await window.aistudio.openSelectKey();
-        }
+      if (err.message?.includes("Requested entity was not found") || err.message?.includes("API Key missing")) {
+        setError("API Key error. Please go to Settings and save your API Key manually.");
       } else {
         setError("Generation failed. Veo models require a paid billing account and a valid project API key.");
       }

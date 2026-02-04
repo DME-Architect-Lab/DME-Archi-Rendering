@@ -2,7 +2,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 const getAIClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Check for manual key in localStorage first
+  const manualKey = localStorage.getItem('gemini_api_key');
+  return new GoogleGenAI({ apiKey: manualKey || process.env.API_KEY });
 };
 
 /**
