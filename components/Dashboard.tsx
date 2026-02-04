@@ -11,6 +11,7 @@ import UtilitiesSection from './sections/UtilitiesSection';
 import VideoSection from './sections/VideoSection';
 import Logo from './Logo';
 import SettingsModal from './SettingsModal';
+import TutorialModal from './TutorialModal';
 
 interface DashboardProps {
   onHome: () => void;
@@ -23,6 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
   const [resolution, setResolution] = useState('1K');
   const [showResMenu, setShowResMenu] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTutorialOpen, setIsTutorialOpen] = useState(false);
   const [clearTrigger, setClearTrigger] = useState(0);
 
   const resolutions = ['1K', '2K', '4K', '6K'];
@@ -96,6 +98,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
         onClearHistory={handleClearHistory}
+      />
+      
+      <TutorialModal 
+        isOpen={isTutorialOpen} 
+        onClose={() => setIsTutorialOpen(false)} 
       />
 
       <header className="h-16 border-b border-slate-800/50 flex items-center justify-between px-4 lg:px-6 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-[60]">
@@ -183,7 +190,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onHome }) => {
         </div>
 
         <div className="hidden lg:flex w-16 border-l border-slate-800/50 flex-col items-center py-8 gap-8 bg-slate-900/30 backdrop-blur-sm">
-          <button className="text-slate-600 hover:text-indigo-400 transition-colors p-2" title="Tutorials">
+          <button 
+            onClick={() => setIsTutorialOpen(true)}
+            className="text-slate-600 hover:text-indigo-400 transition-colors p-2" 
+            title="Tutorials / အသုံးပြုနည်း"
+          >
             <Info className="w-6 h-6" />
           </button>
           <button className="text-slate-600 hover:text-indigo-400 transition-colors p-2" title="Documentation">
